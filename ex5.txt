@@ -1,0 +1,35 @@
+
+Phần 1: Thiết kế kiến trúc PowerShell Script
+Quy trình tự động hóa được chia thành 4 khối cấu trúc chính:
+1. **Header block:** Phần chú thích (`#`) chứa thông tin mô tả tên script, tác giả và ngày thực hiện.
+2. **Biến cấu hình (`$variable`):** Khai báo các đường dẫn tệp log nguồn và tệp báo cáo đích để dễ dàng bảo trì.
+3. **Thông báo tiến trình (`Write-Host`):** In thông báo trạng thái trực tiếp ra màn hình terminal để người quản trị theo dõi mà không làm ảnh hưởng đến dữ liệu đầu ra.
+4. **Logic xử lý (Pipeline):** Thực hiện đọc tệp log (`Get-Content`) ➔ Lọc lỗi 404 (`Select-String`) ➔ Ghi tiêu đề và kết quả vào tệp báo cáo (`Add-Content` / `>>`).
+Phần 2: Sản phẩm Mã nguồn (auto_report.ps1)
+Dưới đây là nội dung hoàn chỉnh của tệp script `auto_report.ps1`:
+```powershell
+<#
+    .SYNOPSIS
+        Script tự động lọc lỗi 404 từ access log và ghi vào báo cáo.
+    .AUTHOR
+        Lê Ngô Hoàng Mạnh (N26DTCN018)
+    .DATE
+        2026-10-13
+#>
+
+# 1. Khai báo biến cấu hình đường dẫn
+$logFile = "access.log"
+$reportFile = "daily_report.txt"
+# 2. Thông báo tiến trình khởi chạy
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "   BAT DAU QUY TRINH LOC LOG TU DONG    " -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+# 3. Tạo tiêu đề Header cho tệp kết quả báo cáo
+"=== HE THONG TU DONG LOC LOG ===" | Out-File -FilePath $reportFile -Encoding utf8
+"Thoi gian chay: $(Get-Date)" \vert{} Out-File -FilePath $reportFile -Append -Encoding utf8
+"----------------------------------------" | Out-File -FilePath $reportFile -Append -Encoding utf8
+# 4. Đọc log, lọc lỗi 404 qua Pipeline và ghi nối tiếp vào báo cáo
+Write-Hst "[INFO] Dangquet va loc loi 404 tu file $logFile..." -ForegroundColor Yellow
+Get-Content $logFile \vert{} Select-String "404" \vert{} Out-File -FilePath $reportFile -Append -Encoding utf8
+# 5. Thông báo hoàn thành
+Write-Host "[SUCCESS] Hoan thanh! Ket qua da duoc luu vao $reportFile" -ForegroundColor Green
